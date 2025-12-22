@@ -1,40 +1,44 @@
 #include "connectx.h"
 
 static char connectx_check_winner(const connectx_board_t board) {
-    // check horizontal
-    for (int i = 0; i < connectx_HEIGHT; i++) {
-        for (int j = 0; j < connectx_WIDTH - 3; j++) {
-            if (board[j][i] != 0 && board[j][i] == board[j + 1][i] &&
-                board[j][i] == board[j + 2][i] && board[j][i] == board[j + 3][i]) {
-                return board[j][i];
-            }
-        }
-    }
+    /*
+     * Generic, fast check for a winner using CONNECTX_TO_WIN.
+     * For each non-empty cell, we check the 4 directions (right, down,
+     * down-right and up-right). We pre-check bounds so the inner loop
+     * doesn't need to test boundaries on each step.
+     */
+    const int W = CONNECTX_WIDTH;
+    const int H = CONNECTX_HEIGHT;
+    const int T = CONNECTX_TO_WIN;
+    const int dirs[4][2] = {{1, 0}, {0, 1}, {1, 1}, {1, -1}};
 
-    // check vertical
-    for (int i = 0; i < connectx_HEIGHT - 3; i++) {
-        for (int j = 0; j < connectx_WIDTH; j++) {
-            if (board[j][i] != 0 && board[j][i] == board[j][i + 1] &&
-                board[j][i] == board[j][i + 2] && board[j][i] == board[j][i + 3]) {
-                return board[j][i];
+    for (int x = 0; x < W; ++x) {
+        for (int y = 0; y < H; ++y) {
+            char p = board[x][y];
+            if (p == 0) {
+                continue;
             }
-        }
-    }
 
-    // check diagonal
-    for (int i = 0; i < connectx_HEIGHT - 3; i++) {
-        for (int j = 0; j < connectx_WIDTH - 3; j++) {
-            if (board[j][i] != 0 && board[j][i] == board[j + 1][i + 1] &&
-                board[j][i] == board[j + 2][i + 2] && board[j][i] == board[j + 3][i + 3]) {
-                return board[j][i];
-            }
-        }
-    }
-    for (int i = 3; i < connectx_HEIGHT; i++) {
-        for (int j = 0; j < connectx_WIDTH - 3; j++) {
-            if (board[j][i] != 0 && board[j][i] == board[j + 1][i - 1] &&
-                board[j][i] == board[j + 2][i - 2] && board[j][i] == board[j + 3][i - 3]) {
-                return board[j][i];
+            for (int d = 0; d < 4; ++d) {
+                int dx = dirs[d][0];
+                int dy = dirs[d][1];
+
+                int endx = x + (T - 1) * dx;
+                int endy = y + (T - 1) * dy;
+                if (endx < 0 || endx >= W || endy < 0 || endy >= H) {
+                    continue;
+                }
+
+                int k;
+                for (k = 1; k < T; ++k) {
+                    if (board[x + k * dx][y + k * dy] != p) {
+                        break;
+                    }
+                }
+
+                if (k == T) {
+                    return p;
+                }
             }
         }
     }
@@ -48,17 +52,17 @@ char connectx_check_win_or_draw(const connectx_board_t board) {
         return check;
     }
 
-    for (int i = 0; i < connectx_WIDTH; i++) {
+    for (int i = 0; i < CONNECTX_WIDTH; i++) {
         if (connectx_is_column_full(board, i) == 0) {
             return 0;
         }
     }
 
-    return connectx_DRAW;
+    return CONNECTX_DRAW;
 }
 
 int connectx_is_column_full(const connectx_board_t board, int column) {
-    for (int i = 0; i < connectx_HEIGHT; i++) {
+    for (int i = 0; i < CONNECTX_HEIGHT; i++) {
         if (board[column][i] == 0) {
             return 0;
         }
@@ -70,7 +74,7 @@ int connectx_is_column_full(const connectx_board_t board, int column) {
 int connectx_update_board(connectx_board_t *board, int column, char player) {
     int result = 0;
 
-    if (column < 0 || column >= connectx_WIDTH) {
+    if (column < 0 || column >= CONNECTX_WIDTH) {
         return -1;
     }
 
@@ -78,7 +82,7 @@ int connectx_update_board(connectx_board_t *board, int column, char player) {
         return -1;
     }
 
-    for (int i = connectx_HEIGHT - 1; i >= 0; i--) {
+    for (int i = CONNECTX_HEIGHT - 1; i >= 0; i--) {
         if ((*board)[column][i] == 0) {
             (*board)[column][i] = player;
             break;

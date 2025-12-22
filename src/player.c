@@ -8,7 +8,7 @@ int connectx_move(const connectx_board_t board, char player) {
         int column = 0;
         if (scanf("%d", &column) < 0) return -1;
         int index = column - 1;
-        if (!(index < 0 || index >= connectx_WIDTH) && connectx_is_column_full(board, index) == 0) {
+        if (!(index < 0 || index >= CONNECTX_WIDTH) && connectx_is_column_full(board, index) == 0) {
             return index;
         }
 

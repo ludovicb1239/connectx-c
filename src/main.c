@@ -4,7 +4,9 @@
 #include "connectx.h"
 #include <dlfcn.h>
 #define DS_AP_IMPLEMENTATION
-#include "ds.h"
+#define TERMINAL_RED "\033[31m"
+#define TERMINAL_YELLOW "\033[33m"
+#define TERMINAL_RESET "\033[0m"
 
 typedef int (*move_t)(const connectx_board_t board, char);
 
@@ -14,40 +16,40 @@ move_t move_player2 = NULL;
 const char *CLEAR_SCREEN_ANSI = "\e[1;1H\e[2J";
 
 void print_result(char result) {
-    if (result == connectx_PLAYER1) {
+    if (result == CONNECTX_PLAYER1) {
         printf("Player 1 wins!\n");
-    } else if (result == connectx_PLAYER2) {
+    } else if (result == CONNECTX_PLAYER2) {
         printf("Player 2 wins!\n");
-    } else if (result == connectx_DRAW) {
+    } else if (result == CONNECTX_DRAW) {
         printf("It's a draw!\n");
     }
 }
 
 char swap_player(char player) {
-    return (player == connectx_PLAYER1) ? connectx_PLAYER2 : connectx_PLAYER1;
+    return (player == CONNECTX_PLAYER1) ? CONNECTX_PLAYER2 : CONNECTX_PLAYER1;
 }
 
 void connectx_display(const connectx_board_t board) {
     fprintf(stdout, "\n");
-    for (int i = 0; i < connectx_HEIGHT; i++) {
-        for (int j = 0; j < connectx_WIDTH; j++) {
+    for (int i = 0; i < CONNECTX_HEIGHT; i++) {
+        for (int j = 0; j < CONNECTX_WIDTH; j++) {
             fprintf(stdout, "+---");
         }
         fprintf(stdout, "+\n");
-        for (int j = 0; j < connectx_WIDTH; j++) {
+        for (int j = 0; j < CONNECTX_WIDTH; j++) {
             fprintf(stdout, "| ");
-            if (board[j][i] == connectx_PLAYER1) fprintf(stdout, DS_TERMINAL_RED"x"DS_TERMINAL_RESET);
-            else if (board[j][i] == connectx_PLAYER2) fprintf(stdout, DS_TERMINAL_BLUE"o"DS_TERMINAL_RESET);
+            if (board[j][i] == CONNECTX_PLAYER1) fprintf(stdout, TERMINAL_RED"x"TERMINAL_RESET);
+            else if (board[j][i] == CONNECTX_PLAYER2) fprintf(stdout, TERMINAL_YELLOW"o"TERMINAL_RESET);
             else fprintf(stdout, " ");
             fprintf(stdout, " ");
         }
         fprintf(stdout, "|\n");
     }
-    for (int i = 0; i < connectx_WIDTH; i++) {
+    for (int i = 0; i < CONNECTX_WIDTH; i++) {
         fprintf(stdout, "+---");
     }
     fprintf(stdout, "+\n");
-    for (int i = 0; i < connectx_WIDTH; i++) {
+    for (int i = 0; i < CONNECTX_WIDTH; i++) {
         fprintf(stdout, "  %d ", i + 1);
     }
     fprintf(stdout, " \n");
@@ -61,7 +63,7 @@ void print_board(connectx_board_t board) {
 }
 
 int move_player(connectx_board_t board, char player) {
-    if (player == connectx_PLAYER1) {
+    if (player == CONNECTX_PLAYER1) {
         return move_player1(board, player);
     } else {
         return move_player2(board, player);
@@ -74,36 +76,15 @@ typedef struct arguments {
 } arguments;
 
 void parse_arguments(int argc, char **argv, arguments *args) {
-    ds_argparse_parser parser = {0};
-    ds_argparse_parser_init(
-        &parser,
-        "connectx",
-        "connect 4 generalized Game",
-        "0.1"
-    );
+    /* Simple positional parser: expect exactly 2 positional args
+       Usage: connectx <player1.so> <player2.so> */
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s <player1.so> <player2.so>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
 
-    ds_argparse_add_argument(&parser, (ds_argparse_options){
-        .short_name = 'a',
-        .long_name = "player1",
-        .description = "the strategy for player 1, a path to a DLL",
-        .type = ARGUMENT_TYPE_POSITIONAL,
-        .required = true,
-    });
-
-    ds_argparse_add_argument(&parser, (ds_argparse_options){
-        .short_name = 'b',
-        .long_name = "player2",
-        .description = "the strategy for player 2, a path to a DLL",
-        .type = ARGUMENT_TYPE_POSITIONAL,
-        .required = true,
-    });
-
-    DS_UNREACHABLE(ds_argparse_parse(&parser, argc, argv));
-
-    args->player1 = ds_argparse_get_value(&parser, "player1");
-    args->player2 = ds_argparse_get_value(&parser, "player2");
-
-    ds_argparse_parser_free(&parser);
+    args->player1 = argv[1];
+    args->player2 = argv[2];
 }
 
 int load_move_function(arguments args) {
@@ -137,7 +118,7 @@ int load_move_function(arguments args) {
 int main(int argc, char **argv) {
     int move = 0;
     char result = 0;
-    char player = connectx_PLAYER1;
+    char player = CONNECTX_PLAYER1;
 
     srand(time(NULL));
 

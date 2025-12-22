@@ -31,7 +31,7 @@ int connectx_move(const connectx_board_t board, char player) {
 }
 
 static char swap_player(char player) {
-    return (player == connectx_PLAYER1) ? connectx_PLAYER2 : connectx_PLAYER1;
+    return (player == CONNECTX_PLAYER1) ? CONNECTX_PLAYER2 : CONNECTX_PLAYER1;
 }
 
 static int eval(const connectx_board_t board, char player) {
@@ -47,19 +47,19 @@ static int eval(const connectx_board_t board, char player) {
 
     int score_1 = 0;
     int score_2 = 0;
-    for (int j = 0; j < connectx_HEIGHT; j++) {
-        for (int k = 0; k < connectx_WIDTH; k++) {
-            score_1 += weights[k][j] * (board[k][j] == connectx_PLAYER1);
-            score_2 += weights[k][j] * (board[k][j] == connectx_PLAYER2);
+    for (int j = 0; j < CONNECTX_HEIGHT; j++) {
+        for (int k = 0; k < CONNECTX_WIDTH; k++) {
+            score_1 += weights[k][j] * (board[k][j] == CONNECTX_PLAYER1);
+            score_2 += weights[k][j] * (board[k][j] == CONNECTX_PLAYER2);
         }
     }
 
-    return (player == connectx_PLAYER1) ? score_1 - score_2 : score_2 - score_1;
+    return (player == CONNECTX_PLAYER1) ? score_1 - score_2 : score_2 - score_1;
 }
 
 int random_move(const connectx_board_t board) {
     int count = 0;
-    for (int i = 0; i < connectx_WIDTH; i++) {
+    for (int i = 0; i < CONNECTX_WIDTH; i++) {
         if (connectx_is_column_full(board, i) == 0) {
             count++;
         }
@@ -70,7 +70,7 @@ int random_move(const connectx_board_t board) {
     }
 
     int column = rand() % count;
-    for (int i = 0; i < connectx_WIDTH; i++) {
+    for (int i = 0; i < CONNECTX_WIDTH; i++) {
         if (connectx_is_column_full(board, i) == 0) {
             if (column == 0) {
                 return i;
@@ -86,7 +86,7 @@ static move_score minmax(const connectx_board_t board, char player, char maxxing
     char result = connectx_check_win_or_draw(board);
     if (result != 0) {
         move_score value = {.score = 0, .move = -1};
-        if (result == connectx_DRAW) return value;
+        if (result == CONNECTX_DRAW) return value;
 
         int good = maxxing == result;
         value.score = good ? MINMAX_INF : -MINMAX_INF;
@@ -104,11 +104,11 @@ static move_score minmax(const connectx_board_t board, char player, char maxxing
     else best.score = MINMAX_INF;
     best.move = random_move(board);
 
-    for (int i = 0; i < connectx_WIDTH; i++) {
+    for (int i = 0; i < CONNECTX_WIDTH; i++) {
         if (connectx_is_column_full(board, i) == 0) {
             connectx_board_t copy = {0};
-            for (int j = 0; j < connectx_HEIGHT; j++) {
-                for (int k = 0; k < connectx_WIDTH; k++) {
+            for (int j = 0; j < CONNECTX_HEIGHT; j++) {
+                for (int k = 0; k < CONNECTX_WIDTH; k++) {
                     copy[k][j] = board[k][j];
                 }
             }

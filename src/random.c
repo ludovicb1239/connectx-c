@@ -5,7 +5,7 @@ int connectx_move(const connectx_board_t board, char player) {
     (void)(player);
 
     int count = 0;
-    for (int i = 0; i < connectx_WIDTH; i++) {
+    for (int i = 0; i < CONNECTX_WIDTH; i++) {
         if (connectx_is_column_full(board, i) == 0) {
             count++;
         }
@@ -16,7 +16,7 @@ int connectx_move(const connectx_board_t board, char player) {
     }
 
     int column = rand() % count;
-    for (int i = 0; i < connectx_WIDTH; i++) {
+    for (int i = 0; i < CONNECTX_WIDTH; i++) {
         if (connectx_is_column_full(board, i) == 0) {
             if (column == 0) {
                 return i;
