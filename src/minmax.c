@@ -1,16 +1,10 @@
 #include "connectx.h"
-
-#ifdef __wasm__
-
-#include "wasm.h"
-
-int rand(void) {
-    return js_random(0, 2147483647);
-}
-
-#else
 #include <stdlib.h>
+#include <time.h>
+#ifdef _OPENMP
+#include <omp.h>
 #endif
+#include <stdint.h>
 
 #ifndef MINMAX_DEPTH
 #define MINMAX_DEPTH 10
@@ -26,8 +20,46 @@ typedef struct move_score {
 static move_score minmax(const connectx_board_t board, char player, char maxxing, int depth, int alpha, int beta);
 static int eval(const connectx_board_t board, char player);
 
+static char swap_player(char player);
+
 int connectx_move(const connectx_board_t board, char player) {
-    return minmax(board, player, player, MINMAX_DEPTH, -MINMAX_INF, MINMAX_INF).move;
+    const int W = CONNECTX_WIDTH;
+
+    /* Scores for each root move (one per column). Initialize to very low.
+     * We will run each legal root move search in parallel.
+     */
+    int scores[CONNECTX_WIDTH];
+    for (int i = 0; i < W; ++i) scores[i] = -MINMAX_INF - 1;
+
+#pragma omp parallel for schedule(dynamic)
+    for (int i = 0; i < W; ++i) {
+        if (connectx_is_column_full(board, i) == 0) {
+            connectx_board_t copy = {0};
+            for (int y = 0; y < CONNECTX_HEIGHT; ++y) {
+                for (int x = 0; x < W; ++x) {
+                    copy[x][y] = board[x][y];
+                }
+            }
+
+            if (connectx_update_board(&copy, i, player) == 0) {
+                move_score mv = minmax(copy, swap_player(player), player,
+                                       MINMAX_DEPTH - 1, -MINMAX_INF, MINMAX_INF);
+                scores[i] = mv.score;
+            }
+        }
+    }
+
+    /* Choose the best score (maximizing for 'player'). Tie-break by lowest column. */
+    int best = -1;
+    int best_score = -MINMAX_INF - 1;
+    for (int i = 0; i < W; ++i) {
+        if (scores[i] > best_score) {
+            best_score = scores[i];
+            best = i;
+        }
+    }
+
+    return best;
 }
 
 static char swap_player(char player) {
@@ -35,15 +67,32 @@ static char swap_player(char player) {
 }
 
 static int eval(const connectx_board_t board, char player) {
-    connectx_board_t weights = {
-        {1, 1, 1, 1, 1, 1},
-        {1, 3, 3, 3, 3, 1},
-        {1, 3, 7, 7, 3, 1},
-        {1, 7, 9, 9, 7, 1},
-        {1, 3, 7, 7, 3, 1},
-        {1, 3, 3, 3, 3, 1},
-        {1, 1, 1, 1, 1, 1},
-    };
+    /* Dynamically generate a weights matrix that favors the center of the board.
+     * The formula scales with CONNECTX_WIDTH / CONNECTX_HEIGHT and keeps
+     * higher values near the central columns/rows similar to the original
+     * hard-coded table.
+     */
+    connectx_board_t weights = {0};
+    const int W = CONNECTX_WIDTH;
+    const int H = CONNECTX_HEIGHT;
+    const double cx = (W - 1) / 2.0;
+    const double cy = (H - 1) / 2.0;
+
+    for (int x = 0; x < W; ++x) {
+        for (int y = 0; y < H; ++y) {
+            double col_score = cx - (x > cx ? x - cx : cx - x);
+            double row_score = cy - (y > cy ? y - cy : cy - y);
+
+            int col_weight = (int)(col_score * 2.0 + 0.5); // columns matter more
+            int row_weight = (int)(row_score + 0.5);
+
+            int w = 1 + col_weight + row_weight;
+            if (w < 1) w = 1;
+            if (w > 127) w = 127; // keep inside signed char range
+
+            weights[x][y] = (char)w;
+        }
+    }
 
     int score_1 = 0;
     int score_2 = 0;
@@ -58,28 +107,20 @@ static int eval(const connectx_board_t board, char player) {
 }
 
 int random_move(const connectx_board_t board) {
+    /* Thread-local seed and rand_r for thread-safety when using OpenMP */
+    static _Thread_local unsigned int seed = 0;
+    if (seed == 0) seed = (unsigned int)((uintptr_t)&seed ^ (unsigned int)time(NULL));
+
+    int legal[CONNECTX_WIDTH];
     int count = 0;
     for (int i = 0; i < CONNECTX_WIDTH; i++) {
         if (connectx_is_column_full(board, i) == 0) {
-            count++;
+            legal[count++] = i;
         }
     }
 
-    if (count == 0) {
-        return -1;
-    }
-
-    int column = rand() % count;
-    for (int i = 0; i < CONNECTX_WIDTH; i++) {
-        if (connectx_is_column_full(board, i) == 0) {
-            if (column == 0) {
-                return i;
-            }
-            column--;
-        }
-    }
-
-    return -1;
+    if (count == 0) return -1;
+    return legal[rand_r(&seed) % count];
 }
 
 static move_score minmax(const connectx_board_t board, char player, char maxxing, int depth, int alpha, int beta) {

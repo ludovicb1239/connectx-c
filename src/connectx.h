@@ -1,9 +1,19 @@
 #ifndef CONNECTX_H
 #define CONNECTX_H
 
+#define CONNECT_X 4
+
+#if CONNECT_X == 4
 #define CONNECTX_WIDTH 7
 #define CONNECTX_HEIGHT 6
 #define CONNECTX_TO_WIN 4
+#elif CONNECT_X == 5
+#define CONNECTX_WIDTH 9
+#define CONNECTX_HEIGHT 7
+#define CONNECTX_TO_WIN 5
+#else
+#error "Unsupported CONNECT_X value. Use 4 or 5."
+#endif
 
 #define CONNECTX_PLAYER1 1
 #define CONNECTX_PLAYER2 2

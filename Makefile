@@ -1,8 +1,20 @@
 ## Makefile generalized
+
+# Enable OpenMP by default for parallel root-level search. Set OPENMP=0 to disable.
+OPENMP ?= 1
+
 # Compiler and flags (overridable from environment)
 CC ?= cc
 CFLAGS ?= -Wall -Wextra -std=c11 -g
 LDFLAGS ?=
+
+ifeq ($(OPENMP),1)
+CFLAGS += -fopenmp
+LDFLAGS += -fopenmp
+endif
+
+# Build position-independent code for shared libraries and TLS safety
+CFLAGS += -fPIC
 
 # Source and build dirs (override if you want to use different layout)
 SRC ?= src
@@ -37,7 +49,7 @@ $(OUT)/%.o: $(SRC)/%.c | $(OUT)
 
 # Generic rule: build shared plugin: libname.so <- name.o + connectx.o
 $(OUT)/lib%.$(SOEXT): $(OUT)/%.o $(OUT)/connectx.o | $(OUT)
-	$(CC) $(SHARED_FLAGS) $^ -o $@
+	$(CC) $(SHARED_FLAGS) $(LDFLAGS) $^ -o $@
 
 $(OUT):
 	mkdir -p $@
