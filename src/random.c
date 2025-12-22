@@ -1,12 +1,12 @@
 #include <stdlib.h>
-#include "connect4.h"
+#include "connectx.h"
 
-int connect4_move(const connect4_board_t board, char player) {
+int connectx_move(const connectx_board_t board, char player) {
     (void)(player);
 
     int count = 0;
-    for (int i = 0; i < CONNECT4_WIDTH; i++) {
-        if (connect4_is_column_full(board, i) == 0) {
+    for (int i = 0; i < connectx_WIDTH; i++) {
+        if (connectx_is_column_full(board, i) == 0) {
             count++;
         }
     }
@@ -16,8 +16,8 @@ int connect4_move(const connect4_board_t board, char player) {
     }
 
     int column = rand() % count;
-    for (int i = 0; i < CONNECT4_WIDTH; i++) {
-        if (connect4_is_column_full(board, i) == 0) {
+    for (int i = 0; i < connectx_WIDTH; i++) {
+        if (connectx_is_column_full(board, i) == 0) {
             if (column == 0) {
                 return i;
             }

@@ -1,12 +1,12 @@
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "connect4.h"
+#include "connectx.h"
 #include <dlfcn.h>
 #define DS_AP_IMPLEMENTATION
 #include "ds.h"
 
-typedef int (*move_t)(const connect4_board_t board, char);
+typedef int (*move_t)(const connectx_board_t board, char);
 
 move_t move_player1 = NULL;
 move_t move_player2 = NULL;
@@ -14,54 +14,54 @@ move_t move_player2 = NULL;
 const char *CLEAR_SCREEN_ANSI = "\e[1;1H\e[2J";
 
 void print_result(char result) {
-    if (result == CONNECT4_PLAYER1) {
+    if (result == connectx_PLAYER1) {
         printf("Player 1 wins!\n");
-    } else if (result == CONNECT4_PLAYER2) {
+    } else if (result == connectx_PLAYER2) {
         printf("Player 2 wins!\n");
-    } else if (result == CONNECT4_DRAW) {
+    } else if (result == connectx_DRAW) {
         printf("It's a draw!\n");
     }
 }
 
 char swap_player(char player) {
-    return (player == CONNECT4_PLAYER1) ? CONNECT4_PLAYER2 : CONNECT4_PLAYER1;
+    return (player == connectx_PLAYER1) ? connectx_PLAYER2 : connectx_PLAYER1;
 }
 
-void connect4_display(const connect4_board_t board) {
+void connectx_display(const connectx_board_t board) {
     fprintf(stdout, "\n");
-    for (int i = 0; i < CONNECT4_HEIGHT; i++) {
-        for (int j = 0; j < CONNECT4_WIDTH; j++) {
+    for (int i = 0; i < connectx_HEIGHT; i++) {
+        for (int j = 0; j < connectx_WIDTH; j++) {
             fprintf(stdout, "+---");
         }
         fprintf(stdout, "+\n");
-        for (int j = 0; j < CONNECT4_WIDTH; j++) {
+        for (int j = 0; j < connectx_WIDTH; j++) {
             fprintf(stdout, "| ");
-            if (board[j][i] == CONNECT4_PLAYER1) fprintf(stdout, DS_TERMINAL_RED"x"DS_TERMINAL_RESET);
-            else if (board[j][i] == CONNECT4_PLAYER2) fprintf(stdout, DS_TERMINAL_BLUE"o"DS_TERMINAL_RESET);
+            if (board[j][i] == connectx_PLAYER1) fprintf(stdout, DS_TERMINAL_RED"x"DS_TERMINAL_RESET);
+            else if (board[j][i] == connectx_PLAYER2) fprintf(stdout, DS_TERMINAL_BLUE"o"DS_TERMINAL_RESET);
             else fprintf(stdout, " ");
             fprintf(stdout, " ");
         }
         fprintf(stdout, "|\n");
     }
-    for (int i = 0; i < CONNECT4_WIDTH; i++) {
+    for (int i = 0; i < connectx_WIDTH; i++) {
         fprintf(stdout, "+---");
     }
     fprintf(stdout, "+\n");
-    for (int i = 0; i < CONNECT4_WIDTH; i++) {
+    for (int i = 0; i < connectx_WIDTH; i++) {
         fprintf(stdout, "  %d ", i + 1);
     }
     fprintf(stdout, " \n");
 }
 
-void print_board(connect4_board_t board) {
+void print_board(connectx_board_t board) {
     (void)(system("stty cooked"));
     printf("%s", CLEAR_SCREEN_ANSI);
-    connect4_display(board);
+    connectx_display(board);
     (void)(system("stty raw"));
 }
 
-int move_player(connect4_board_t board, char player) {
-    if (player == CONNECT4_PLAYER1) {
+int move_player(connectx_board_t board, char player) {
+    if (player == connectx_PLAYER1) {
         return move_player1(board, player);
     } else {
         return move_player2(board, player);
@@ -77,8 +77,8 @@ void parse_arguments(int argc, char **argv, arguments *args) {
     ds_argparse_parser parser = {0};
     ds_argparse_parser_init(
         &parser,
-        "connect4",
-        "Connect 4 Game",
+        "connectx",
+        "connect 4 generalized Game",
         "0.1"
     );
 
@@ -113,7 +113,7 @@ int load_move_function(arguments args) {
         return -1;
     }
 
-    move_player1 = (move_t)dlsym(strat1, "connect4_move");
+    move_player1 = (move_t)dlsym(strat1, "connectx_move");
     if (move_player1 == NULL) {
         fprintf(stderr, "%s\n", dlerror());
         return -1;
@@ -125,7 +125,7 @@ int load_move_function(arguments args) {
         return -1;
     }
 
-    move_player2 = (move_t)dlsym(strat2, "connect4_move");
+    move_player2 = (move_t)dlsym(strat2, "connectx_move");
     if (move_player2 == NULL) {
         fprintf(stderr, "%s\n", dlerror());
         return -1;
@@ -137,7 +137,7 @@ int load_move_function(arguments args) {
 int main(int argc, char **argv) {
     int move = 0;
     char result = 0;
-    char player = CONNECT4_PLAYER1;
+    char player = connectx_PLAYER1;
 
     srand(time(NULL));
 
@@ -148,18 +148,18 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    connect4_board_t board = {0};
+    connectx_board_t board = {0};
     print_board(board);
 
     while (1) {
         move = move_player(board, player);
-        if (move == -1 || connect4_update_board(&board, move, player) == -1) {
+        if (move == -1 || connectx_update_board(&board, move, player) == -1) {
             printf("Invalid move for player %d (%d).\n", player, move);
             result = swap_player(player);
             break;
         }
         print_board(board);
-        result = connect4_check_win_or_draw(board);
+        result = connectx_check_win_or_draw(board);
         if (result != 0) {
             break;
         }

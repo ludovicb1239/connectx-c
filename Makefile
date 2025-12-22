@@ -28,15 +28,15 @@ ALL_LIBS := $(patsubst %, $(OUT)/lib%.$(SOEXT), $(LIBS))
 
 all: $(OUT)/main $(ALL_LIBS)
 
-$(OUT)/main: $(OUT)/main.o $(OUT)/connect4.o | $(OUT)
+$(OUT)/main: $(OUT)/main.o $(OUT)/connectx.o | $(OUT)
 	$(CC) $(LDFLAGS) $^ -o $@
 
 # Generic rule: compile sources into $(OUT)/*.o
 $(OUT)/%.o: $(SRC)/%.c | $(OUT)
 	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
-# Generic rule: build shared plugin: libname.so <- name.o + connect4.o
-$(OUT)/lib%.$(SOEXT): $(OUT)/%.o $(OUT)/connect4.o | $(OUT)
+# Generic rule: build shared plugin: libname.so <- name.o + connectx.o
+$(OUT)/lib%.$(SOEXT): $(OUT)/%.o $(OUT)/connectx.o | $(OUT)
 	$(CC) $(SHARED_FLAGS) $^ -o $@
 
 $(OUT):

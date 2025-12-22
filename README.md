@@ -1,6 +1,6 @@
-# Connect 4
+# connect 4 generalized
 
-A simple implemenation of the Connect 4 game in C.
+A simple implemenation of the connect 4 generalized game in C.
 
 The goal of this project is to implement a modular way of injecting different
 player strategies using Dynamic Link Libraries (DLLs).

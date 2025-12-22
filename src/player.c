@@ -1,14 +1,14 @@
 #include <stdio.h>
-#include "connect4.h"
+#include "connectx.h"
 
-int connect4_move(const connect4_board_t board, char player) {
+int connectx_move(const connectx_board_t board, char player) {
     (void)(player);
 
     while (1) {
         int column = 0;
         if (scanf("%d", &column) < 0) return -1;
         int index = column - 1;
-        if (!(index < 0 || index >= CONNECT4_WIDTH) && connect4_is_column_full(board, index) == 0) {
+        if (!(index < 0 || index >= connectx_WIDTH) && connectx_is_column_full(board, index) == 0) {
             return index;
         }
 
