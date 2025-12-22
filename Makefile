@@ -3,10 +3,10 @@
 # Enable OpenMP by default for parallel root-level search. Set OPENMP=0 to disable.
 OPENMP ?= 1
 
-# Compiler and flags (overridable from environment)
-CC ?= cc
-CFLAGS ?= -Wall -Wextra -std=c11 -g
-LDFLAGS ?=
+# Compiler and flags (hardcoded for release/optimized builds)
+CC := cc
+CFLAGS := -Wall -Wextra -std=c11 -O3 -march=native -flto -DNDEBUG
+LDFLAGS := -flto
 
 ifeq ($(OPENMP),1)
 CFLAGS += -fopenmp
@@ -28,7 +28,6 @@ SHARED_FLAGS ?= -shared -fPIC
 PREFIX ?= /usr/local
 DESTDIR ?=
 
-.PHONY: all clean install uninstall run
 
 # Discover sources and map to object files in $(OUT)
 SRCS := $(wildcard $(SRC)/*.c)
@@ -37,6 +36,8 @@ OBJS := $(patsubst $(SRC)/%.c,$(OUT)/%.o,$(SRCS))
 # Default build: main and all plugin libs
 LIBS := random player minmax
 ALL_LIBS := $(patsubst %, $(OUT)/lib%.$(SOEXT), $(LIBS))
+
+.PHONY: all clean install uninstall run
 
 all: $(OUT)/main $(ALL_LIBS)
 

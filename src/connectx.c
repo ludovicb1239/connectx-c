@@ -46,16 +46,24 @@ static char connectx_check_winner(const connectx_board_t board) {
     return 0;
 }
 
+int connectx_is_board_full(const connectx_board_t board) {
+    // Optimized check for full board
+    for (int i = 0; i < CONNECTX_WIDTH; i++) {
+        if (connectx_is_column_full(board, i) == 0) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 char connectx_check_win_or_draw(const connectx_board_t board) {
     char check = connectx_check_winner(board);
     if (check != 0) {
         return check;
     }
 
-    for (int i = 0; i < CONNECTX_WIDTH; i++) {
-        if (connectx_is_column_full(board, i) == 0) {
-            return 0;
-        }
+    if (connectx_is_board_full(board) == 0) {
+        return 0;
     }
 
     return CONNECTX_DRAW;
