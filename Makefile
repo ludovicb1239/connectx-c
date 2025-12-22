@@ -56,7 +56,7 @@ uninstall:
 
 # Run the built executable. Pass arguments via ARGS, e.g. `make run ARGS="-v"`
 # By default run a demo using the built plugins (random vs minmax)
-ARGS ?= $(OUT)/librandom.$(SOEXT) $(OUT)/libminmax.$(SOEXT)
+ARGS ?= $(OUT)/libplayer.$(SOEXT) $(OUT)/libminmax.$(SOEXT)
 run: all
 	$(OUT)/main $(ARGS)
 

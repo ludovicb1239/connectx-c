@@ -13,7 +13,7 @@ int rand(void) {
 #endif
 
 #ifndef MINMAX_DEPTH
-#define MINMAX_DEPTH 9
+#define MINMAX_DEPTH 10
 #endif
 
 #define MINMAX_INF 1000000
