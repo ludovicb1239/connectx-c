@@ -37,12 +37,17 @@ OBJS := $(patsubst $(SRC)/%.c,$(OUT)/%.o,$(SRCS))
 LIBS := random player minmax
 ALL_LIBS := $(patsubst %, $(OUT)/lib%.$(SOEXT), $(LIBS))
 
-.PHONY: all clean install uninstall run
+.PHONY: all clean run adb
 
 all: $(OUT)/main $(ALL_LIBS)
+adb: $(OUT)/adb-main $(ALL_LIBS)
 
 $(OUT)/main: $(OUT)/main.o $(OUT)/connectx.o | $(OUT)
 	$(CC) $(LDFLAGS) $^ -o $@
+
+$(OUT)/adb-main: $(OUT)/adb-main.o $(OUT)/connectx.o | $(OUT)
+	# adb build needs libpng for image control utilities
+	$(CC) $(LDFLAGS) $^ -o $@ -lpng
 
 # Generic rule: compile sources into $(OUT)/*.o
 $(OUT)/%.o: $(SRC)/%.c | $(OUT)
@@ -55,23 +60,17 @@ $(OUT)/lib%.$(SOEXT): $(OUT)/%.o $(OUT)/connectx.o | $(OUT)
 $(OUT):
 	mkdir -p $@
 
-# Install/uninstall
-
-install: all
-	mkdir -p $(DESTDIR)$(PREFIX)/bin
-	install -m 755 $(OUT)/main $(DESTDIR)$(PREFIX)/bin/
-	mkdir -p $(DESTDIR)$(PREFIX)/lib
-	install -m 755 $(ALL_LIBS) $(DESTDIR)$(PREFIX)/lib/
-
-uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/bin/main
-	rm -f $(patsubst %,$(DESTDIR)$(PREFIX)/lib/%,$(notdir $(ALL_LIBS)))
-
 # Run the built executable. Pass arguments via ARGS, e.g. `make run ARGS="-v"`
 # By default run a demo using the built plugins (random vs minmax)
 ARGS ?= $(OUT)/libplayer.$(SOEXT) $(OUT)/libminmax.$(SOEXT)
 run: all
 	$(OUT)/main $(ARGS)
+
+# Run the adb executable. Pass arguments via ADB_ARGS, e.g. `make adb-run ADB_ARGS="-v"`
+ADB_ARGS ?= $(OUT)/libminmax.$(SOEXT)
+.PHONY: adb-run
+adb-run: adb
+	$(OUT)/adb-main $(ADB_ARGS)
 
 # Clean up build artifacts
 clean:
