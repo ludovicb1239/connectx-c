@@ -35,11 +35,8 @@ int connectx_move(const connectx_board_t board, char player) {
     for (int i = 0; i < W; ++i) {
         if (connectx_is_column_full(board, i) == 0) {
             connectx_board_t copy = {0};
-            for (int y = 0; y < CONNECTX_HEIGHT; ++y) {
-                for (int x = 0; x < W; ++x) {
-                    copy[x][y] = board[x][y];
-                }
-            }
+            /* Copy the board using memcpy */
+            memcpy(copy, board, sizeof(connectx_board_t));
 
             if (connectx_update_board(&copy, i, player) == 0) {
                 move_score mv = minmax(copy, swap_player(player), player,
@@ -143,7 +140,7 @@ static move_score minmax(const connectx_board_t board, char player, char maxxing
     move_score best = {.score = 0, .move = -1};
     if (maxxing == player) best.score = -MINMAX_INF;
     else best.score = MINMAX_INF;
-    best.move = random_move(board);
+    best.move = random_move(board); // default move if all else fails
 
     for (int i = 0; i < CONNECTX_WIDTH; i++) {
         if (connectx_is_column_full(board, i) == 0) {
@@ -153,6 +150,7 @@ static move_score minmax(const connectx_board_t board, char player, char maxxing
                     copy[k][j] = board[k][j];
                 }
             }
+            // Make the move and recurse
             if (connectx_update_board(&copy, i, player) == -1) {
                 break;
             }

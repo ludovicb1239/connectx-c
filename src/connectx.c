@@ -1,5 +1,46 @@
 #include "connectx.h"
 
+static char connectx_check_winner_pos(const connectx_board_t board, int x, int y){
+    /*
+     * Check for a winner starting from position (x, y).
+     * This function checks in all 4 directions (horizontal, vertical,
+     * diagonal down-right, diagonal up-right) for a connect of CONNECTX_TO_WIN.
+     */
+    const int W = CONNECTX_WIDTH;
+    const int H = CONNECTX_HEIGHT;
+    const int T = CONNECTX_TO_WIN;
+    const int dirs[4][2] = {{1, 0}, {0, 1}, {1, 1}, {1, -1}};
+
+    char p = board[x][y];
+    if (p == 0) {
+        return 0;
+    }
+
+    for (int d = 0; d < 4; ++d) {
+        int dx = dirs[d][0];
+        int dy = dirs[d][1];
+
+        int endx = x + (T - 1) * dx;
+        int endy = y + (T - 1) * dy;
+        if (endx < 0 || endx >= W || endy < 0 || endy >= H) {
+            continue;
+        }
+
+        int k;
+        for (k = 1; k < T; ++k) {
+            if (board[x + k * dx][y + k * dy] != p) {
+                break;
+            }
+        }
+
+        if (k == T) {
+            return p;
+        }
+    }
+
+    return 0;
+}
+
 static char connectx_check_winner(const connectx_board_t board) {
     /*
      * Generic, fast check for a winner using CONNECTX_TO_WIN.
@@ -10,39 +51,32 @@ static char connectx_check_winner(const connectx_board_t board) {
     const int W = CONNECTX_WIDTH;
     const int H = CONNECTX_HEIGHT;
     const int T = CONNECTX_TO_WIN;
-    const int dirs[4][2] = {{1, 0}, {0, 1}, {1, 1}, {1, -1}};
 
     for (int x = 0; x < W; ++x) {
         for (int y = 0; y < H; ++y) {
-            char p = board[x][y];
-            if (p == 0) {
-                continue;
-            }
-
-            for (int d = 0; d < 4; ++d) {
-                int dx = dirs[d][0];
-                int dy = dirs[d][1];
-
-                int endx = x + (T - 1) * dx;
-                int endy = y + (T - 1) * dy;
-                if (endx < 0 || endx >= W || endy < 0 || endy >= H) {
-                    continue;
-                }
-
-                int k;
-                for (k = 1; k < T; ++k) {
-                    if (board[x + k * dx][y + k * dy] != p) {
-                        break;
-                    }
-                }
-
-                if (k == T) {
-                    return p;
-                }
+            char winner = connectx_check_winner_pos(board, x, y);
+            if (winner != 0) {
+                return winner;
             }
         }
     }
 
+    return 0;
+}
+
+// Returns 1 if theres a win in the specified column at the last placed piece, 0 otherwise
+char connectx_check_win_idx(const connectx_board_t board, int col){
+    /*
+     * Check if there is a win in the specified column.
+     * This is an optimized version that only checks for a win
+     * involving the last played piece in the given column.
+     */
+    for (int row = CONNECTX_HEIGHT - 1; row >= 0; row--) {
+        if (board[col][row] != 0) {
+            char winner = connectx_check_winner_pos(board, col, row);
+            return winner != 0;
+        }
+    }
     return 0;
 }
 

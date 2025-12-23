@@ -21,7 +21,6 @@ SRC ?= src
 OUT ?= dist
 
 # Shared library extension and flags
-SOEXT ?= so
 SHARED_FLAGS ?= -shared -fPIC
 
 # Install prefix
@@ -35,7 +34,7 @@ OBJS := $(patsubst $(SRC)/%.c,$(OUT)/%.o,$(SRCS))
 
 # Default build: main and all plugin libs
 LIBS := random player minmax
-ALL_LIBS := $(patsubst %, $(OUT)/lib%.$(SOEXT), $(LIBS))
+ALL_LIBS := $(patsubst %, $(OUT)/lib%.so, $(LIBS))
 
 .PHONY: all clean run adb
 
@@ -54,7 +53,7 @@ $(OUT)/%.o: $(SRC)/%.c | $(OUT)
 	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
 # Generic rule: build shared plugin: libname.so <- name.o + connectx.o
-$(OUT)/lib%.$(SOEXT): $(OUT)/%.o $(OUT)/connectx.o | $(OUT)
+$(OUT)/lib%.so: $(OUT)/%.o $(OUT)/connectx.o | $(OUT)
 	$(CC) $(SHARED_FLAGS) $(LDFLAGS) $^ -o $@
 
 $(OUT):
@@ -62,12 +61,15 @@ $(OUT):
 
 # Run the built executable. Pass arguments via ARGS, e.g. `make run ARGS="-v"`
 # By default run a demo using the built plugins (random vs minmax)
-ARGS ?= $(OUT)/libplayer.$(SOEXT) $(OUT)/libminmax.$(SOEXT)
+ARGS ?= $(OUT)/libplayer.so $(OUT)/libminmax.so
 run: all
 	$(OUT)/main $(ARGS)
 
+test: all
+	$(OUT)/main $(OUT)/libminmax.so $(OUT)/libminmax.so
+
 # Run the adb executable. Pass arguments via ADB_ARGS, e.g. `make adb-run ADB_ARGS="-v"`
-ADB_ARGS ?= $(OUT)/libminmax.$(SOEXT)
+ADB_ARGS ?= $(OUT)/libminmax.so
 .PHONY: adb-run
 adb-run: adb
 	$(OUT)/adb-main $(ADB_ARGS)

@@ -131,6 +131,19 @@ int read_board(connectx_board_t board, char* player) {
             }
         }
     }
+    // check if board state is valid
+    for (int x = 0; x < CONNECTX_WIDTH; x++) {
+        int found_empty = 0;
+        for (int y = CONNECTX_HEIGHT - 1; y >= 0; y--) {
+            if (board[x][y] == CONNECTX_EMPTY) {
+                found_empty = 1;
+            } else if (found_empty) {
+                printf("Invalid board state: floating piece at column %d, row %d\n", x, y);
+                return -1;
+            }
+        }
+    }
+
     if (red_count == yellow_count) {
         return CONNECTX_PLAYER1;
     } else if (red_count == yellow_count + 1) {
@@ -232,7 +245,7 @@ int wait_for_opponent(connectx_board_t board, char playing_as) {
     for (int attempt = 0; attempt < 25; attempt++) {
         current_player = read_board(board, &empt);
         if (current_player == -1) {
-            printf("Failed to read board state.\n");
+            printf("Failed to read board state, retrying...\n");
             continue;
         }
         if (current_player == playing_as) {
@@ -295,7 +308,7 @@ int main(int argc, char **argv) {
         result = connectx_check_win_or_draw(board);
         if (result != 0) break;
 
-        sleep(500); // Wait a bit for the animation
+        sleep(800); // Wait a bit for the animation
         player = swap_player(player);
     }
     print_result(result);
