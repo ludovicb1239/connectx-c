@@ -5,9 +5,10 @@
 #include <omp.h>
 #endif
 #include <stdint.h>
+#include <string.h>
 
 #ifndef MINMAX_DEPTH
-#define MINMAX_DEPTH 10
+#define MINMAX_DEPTH 11
 #endif
 
 #define MINMAX_INF 1000000
@@ -31,6 +32,20 @@ int connectx_move(const connectx_board_t board, char player) {
     int scores[CONNECTX_WIDTH];
     for (int i = 0; i < W; ++i) scores[i] = -MINMAX_INF - 1;
 
+    /* Quick serial scan: if any root move immediately wins, return it right away.
+     * This saves us from launching the parallel minmax searches when a trivial
+     * winning move exists.
+     */
+    for (int i = 0; i < W; ++i) {
+        if (connectx_is_column_full(board, i) == 0) {
+            connectx_board_t copy = {0};
+            memcpy(copy, board, sizeof(connectx_board_t));
+            if (connectx_update_board(&copy, i, player) == 0 && connectx_check_win_idx(copy, i)) {
+                return i;
+            }
+        }
+    }
+
 #pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < W; ++i) {
         if (connectx_is_column_full(board, i) == 0) {
@@ -39,9 +54,16 @@ int connectx_move(const connectx_board_t board, char player) {
             memcpy(copy, board, sizeof(connectx_board_t));
 
             if (connectx_update_board(&copy, i, player) == 0) {
-                move_score mv = minmax(copy, swap_player(player), player,
-                                       MINMAX_DEPTH - 1, -MINMAX_INF, MINMAX_INF);
-                scores[i] = mv.score;
+                /* If this root move immediately wins, record a maximal score. */
+                if (connectx_check_win_idx(copy, i)) {
+                    scores[i] = MINMAX_INF; /* root `maxxing` is `player` */
+                } else if (connectx_is_board_full(copy)) {
+                    scores[i] = 0;
+                } else {
+                    move_score mv = minmax(copy, swap_player(player), player,
+                                           MINMAX_DEPTH - 1, -MINMAX_INF, MINMAX_INF);
+                    scores[i] = mv.score;
+                }
             }
         }
     }
@@ -121,15 +143,12 @@ int random_move(const connectx_board_t board) {
 }
 
 static move_score minmax(const connectx_board_t board, char player, char maxxing, int depth, int alpha, int beta) {
-    char result = connectx_check_win_or_draw(board);
-    if (result != 0) {
-        move_score value = {.score = 0, .move = -1};
-        if (result == CONNECTX_DRAW) return value;
-
-        int good = maxxing == result;
-        value.score = good ? MINMAX_INF : -MINMAX_INF;
-        return value;
-    }
+    /*
+     * NOTE: We avoid scanning the whole board for a win at function entry.
+     * Instead, we check for a win immediately after applying a move (see loop
+     * below) using `connectx_check_win_idx`, which inspects only the last
+     * placed piece in the column.
+     */
 
     if (depth == 0) {
         move_score value = {.score = 0, .move = -1};
@@ -154,7 +173,23 @@ static move_score minmax(const connectx_board_t board, char player, char maxxing
             if (connectx_update_board(&copy, i, player) == -1) {
                 break;
             }
-            move_score value = minmax(copy, swap_player(player), maxxing, depth - 1, alpha, beta);
+
+            /* Check for an immediate terminal state caused by this move. */
+            move_score value = {.score = 0, .move = -1};
+            if (connectx_check_win_idx(copy, i)) {
+                /* The player who just moved is `player` and caused a win. */
+                int good = (maxxing == player);
+                value.score = good ? MINMAX_INF : -MINMAX_INF;
+                value.move = i;
+            } else {
+                /* If the board is full it's a draw. Otherwise recurse. */
+                if (connectx_is_board_full(copy)) {
+                    value.score = 0;
+                    value.move = i;
+                } else {
+                    value = minmax(copy, swap_player(player), maxxing, depth - 1, alpha, beta);
+                }
+            }
 
             if (maxxing == player) {
                 if (value.score > best.score) {

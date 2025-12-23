@@ -16,26 +16,35 @@ static char connectx_check_winner_pos(const connectx_board_t board, int x, int y
         return 0;
     }
 
+    /* Count contiguous pieces in both directions for each primary line
+     * (horizontal, vertical, two diagonals). If the total contiguous count
+     * including the starting cell reaches CONNECTX_TO_WIN, we have a winner.
+     */
     for (int d = 0; d < 4; ++d) {
         int dx = dirs[d][0];
         int dy = dirs[d][1];
 
-        int endx = x + (T - 1) * dx;
-        int endy = y + (T - 1) * dy;
-        if (endx < 0 || endx >= W || endy < 0 || endy >= H) {
-            continue;
+        int count = 1; /* include the starting piece at (x,y) */
+
+        /* forward direction */
+        for (int k = 1; k < T; ++k) {
+            int nx = x + k * dx;
+            int ny = y + k * dy;
+            if (nx < 0 || nx >= W || ny < 0 || ny >= H) break;
+            if (board[nx][ny] != p) break;
+            ++count;
         }
 
-        int k;
-        for (k = 1; k < T; ++k) {
-            if (board[x + k * dx][y + k * dy] != p) {
-                break;
-            }
+        /* backward direction */
+        for (int k = 1; k < T; ++k) {
+            int nx = x - k * dx;
+            int ny = y - k * dy;
+            if (nx < 0 || nx >= W || ny < 0 || ny >= H) break;
+            if (board[nx][ny] != p) break;
+            ++count;
         }
 
-        if (k == T) {
-            return p;
-        }
+        if (count >= T) return p;
     }
 
     return 0;

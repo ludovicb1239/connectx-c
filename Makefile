@@ -74,6 +74,17 @@ ADB_ARGS ?= $(OUT)/libminmax.so
 adb-run: adb
 	$(OUT)/adb-main $(ADB_ARGS)
 
+# Unit test: immediate win detection
+$(OUT)/test_immediate: $(OUT)/test_immediate.o $(OUT)/minmax.o $(OUT)/connectx.o | $(OUT)
+	$(CC) $(LDFLAGS) $^ -o $@
+
+$(OUT)/test_immediate.o: $(SRC)/test_immediate_win.c | $(OUT)
+	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
+
+.PHONY: test-immediate
+test-immediate: $(OUT)/test_immediate
+	$(OUT)/test_immediate
+
 # Clean up build artifacts
 clean:
 	rm -rf $(OUT)

@@ -5,9 +5,16 @@
 #include "connectx.h"
 
 const int pos_top_left_x = 24;
-const int pos_top_left_y = 519;
 const int pos_bot_right_x = 1055;
+
+#if CONNECT_X == 4
+const int pos_top_left_y = 519;
 const int pos_bot_right_y = 1405;
+#elif CONNECT_X == 5
+const int pos_top_left_y = 561;
+const int pos_bot_right_y = 1362;
+#endif
+
 const int width = CONNECTX_WIDTH;
 const int height = CONNECTX_HEIGHT;
 const int cell_w = (pos_bot_right_x - pos_top_left_x) / width;
@@ -131,6 +138,7 @@ int read_board(connectx_board_t board, char* player) {
             }
         }
     }
+    print_board(board);
     // check if board state is valid
     for (int x = 0; x < CONNECTX_WIDTH; x++) {
         int found_empty = 0;

@@ -24,6 +24,7 @@ typedef char connectx_board_t[CONNECTX_WIDTH][CONNECTX_HEIGHT];
 
 char connectx_check_win_or_draw(const connectx_board_t board);
 char connectx_check_win_idx(const connectx_board_t board, int col);
+int connectx_is_board_full(const connectx_board_t board);
 int connectx_is_column_full(const connectx_board_t board, int column);
 int connectx_update_board(connectx_board_t *board, int column, char player);
 
