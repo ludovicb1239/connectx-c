@@ -75,12 +75,8 @@ static char connectx_check_winner(const connectx_board_t board) {
 
 // Returns 1 if theres a win in the specified column at the last placed piece, 0 otherwise
 char connectx_check_win_idx(const connectx_board_t board, int col){
-    /*
-     * Check if there is a win in the specified column.
-     * This is an optimized version that only checks for a win
-     * involving the last played piece in the given column.
-     */
-    for (int row = CONNECTX_HEIGHT - 1; row >= 0; row--) {
+    // Check if there is a win in the specified column.
+    for (int row = 0; row < CONNECTX_HEIGHT; row++) {
         if (board[col][row] != 0) {
             char winner = connectx_check_winner_pos(board, col, row);
             return winner != 0;
@@ -122,23 +118,18 @@ int connectx_is_column_full(const connectx_board_t board, int column) {
     return 1;
 }
 
-int connectx_update_board(connectx_board_t *board, int column, char player) {
-    int result = 0;
-
-    if (column < 0 || column >= CONNECTX_WIDTH) {
+int connectx_update_board(connectx_board_t board, int column, char player) {
+    if (column < 0 || column >= CONNECTX_WIDTH)
         return -1;
-    }
-
-    if (connectx_is_column_full(*board, column) == 1) {
+    if (connectx_is_column_full(board, column) == 1)
         return -1;
-    }
 
+    // Place the piece in the lowest available row in the specified column
     for (int i = CONNECTX_HEIGHT - 1; i >= 0; i--) {
-        if ((*board)[column][i] == 0) {
-            (*board)[column][i] = player;
+        if (board[column][i] == 0) {
+            board[column][i] = player;
             break;
         }
     }
-
-    return result;
+    return 0;
 }

@@ -38,8 +38,8 @@ void connectx_display(const connectx_board_t board) {
         fprintf(stdout, "+\n");
         for (int j = 0; j < CONNECTX_WIDTH; j++) {
             fprintf(stdout, "| ");
-            if (board[j][i] == CONNECTX_PLAYER1) fprintf(stdout, TERMINAL_RED"x"TERMINAL_RESET);
-            else if (board[j][i] == CONNECTX_PLAYER2) fprintf(stdout, TERMINAL_YELLOW"o"TERMINAL_RESET);
+            if (board[j][i] == CONNECTX_PLAYER1) fprintf(stdout, TERMINAL_RED"🅧"TERMINAL_RESET);
+            else if (board[j][i] == CONNECTX_PLAYER2) fprintf(stdout, TERMINAL_YELLOW"🅞"TERMINAL_RESET);
             else fprintf(stdout, " ");
             fprintf(stdout, " ");
         }
@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
 
     while (1) {
         move = move_player(board, player);
-        if (move == -1 || connectx_update_board(&board, move, player) == -1) {
+        if (move == -1 || connectx_update_board(board, move, player) == -1) {
             printf("Invalid move for player %d (%d).\n", player, move);
             result = swap_player(player);
             break;

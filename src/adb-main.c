@@ -307,7 +307,7 @@ int main(int argc, char **argv) {
         }
         move = move_player(board, player);
         play_move_board(board, move);
-        if (move == -1 || connectx_update_board(&board, move, player) == -1) {
+        if (move == -1 || connectx_update_board(board, move, player) == -1) {
             printf("Invalid move for player %d (%d).\n", player, move);
             result = swap_player(player);
             break;

@@ -7,9 +7,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#ifndef MINMAX_DEPTH
 #define MINMAX_DEPTH 11
-#endif
 
 #define MINMAX_INF 1000000
 
@@ -31,17 +29,27 @@ int connectx_move(const connectx_board_t board, char player) {
      */
     int scores[CONNECTX_WIDTH];
     for (int i = 0; i < W; ++i) scores[i] = -MINMAX_INF - 1;
-
-    /* Quick serial scan: if any root move immediately wins, return it right away.
-     * This saves us from launching the parallel minmax searches when a trivial
-     * winning move exists.
-     */
-    for (int i = 0; i < W; ++i) {
-        if (connectx_is_column_full(board, i) == 0) {
-            connectx_board_t copy = {0};
-            memcpy(copy, board, sizeof(connectx_board_t));
-            if (connectx_update_board(&copy, i, player) == 0 && connectx_check_win_idx(copy, i)) {
-                return i;
+    
+    {
+        // Quick serial scan: if any root move immediately wins, return it right away.
+        for (int i = 0; i < W; ++i) {
+            if (connectx_is_column_full(board, i) == 0) {
+                connectx_board_t copy = {0};
+                memcpy(copy, board, sizeof(connectx_board_t));
+                if (connectx_update_board(copy, i, player) == 0 && connectx_check_win_idx(copy, i)) {
+                    return i;
+                }
+            }
+        }
+        // Quick serial scan: if any root move immediately wins for the opponent, return it right away.
+        char opponent = swap_player(player);
+        for (int i = 0; i < W; ++i) {
+            if (connectx_is_column_full(board, i) == 0) {
+                connectx_board_t copy = {0};
+                memcpy(copy, board, sizeof(connectx_board_t));
+                if (connectx_update_board(copy, i, opponent) == 0 && connectx_check_win_idx(copy, i)) {
+                    return i;
+                }
             }
         }
     }
@@ -53,15 +61,12 @@ int connectx_move(const connectx_board_t board, char player) {
             /* Copy the board using memcpy */
             memcpy(copy, board, sizeof(connectx_board_t));
 
-            if (connectx_update_board(&copy, i, player) == 0) {
+            if (connectx_update_board(copy, i, player) == 0) {
                 /* If this root move immediately wins, record a maximal score. */
-                if (connectx_check_win_idx(copy, i)) {
-                    scores[i] = MINMAX_INF; /* root `maxxing` is `player` */
-                } else if (connectx_is_board_full(copy)) {
+                if (connectx_is_board_full(copy)) {
                     scores[i] = 0;
-                } else {
-                    move_score mv = minmax(copy, swap_player(player), player,
-                                           MINMAX_DEPTH - 1, -MINMAX_INF, MINMAX_INF);
+                } else {   
+                    move_score mv = minmax(copy, swap_player(player), player, MINMAX_DEPTH - 1, -MINMAX_INF, MINMAX_INF);
                     scores[i] = mv.score;
                 }
             }
@@ -143,16 +148,9 @@ int random_move(const connectx_board_t board) {
 }
 
 static move_score minmax(const connectx_board_t board, char player, char maxxing, int depth, int alpha, int beta) {
-    /*
-     * NOTE: We avoid scanning the whole board for a win at function entry.
-     * Instead, we check for a win immediately after applying a move (see loop
-     * below) using `connectx_check_win_idx`, which inspects only the last
-     * placed piece in the column.
-     */
-
     if (depth == 0) {
         move_score value = {.score = 0, .move = -1};
-        value.score = eval(board, player);
+        value.score = eval(board, maxxing);
         return value;
     }
 
@@ -170,7 +168,7 @@ static move_score minmax(const connectx_board_t board, char player, char maxxing
                 }
             }
             // Make the move and recurse
-            if (connectx_update_board(&copy, i, player) == -1) {
+            if (connectx_update_board(copy, i, player) == -1) {
                 break;
             }
 
@@ -206,8 +204,7 @@ static move_score minmax(const connectx_board_t board, char player, char maxxing
 
                 if (value.score < beta) beta = value.score;
             }
-
-            if (alpha > beta) break;
+            if (alpha >= beta) break;
         }
     }
 
