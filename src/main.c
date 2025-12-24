@@ -13,8 +13,6 @@ typedef int (*move_t)(const connectx_board_t board, char);
 move_t move_player1 = NULL;
 move_t move_player2 = NULL;
 
-const char *CLEAR_SCREEN_ANSI = "\e[1;1H\e[2J";
-
 void print_result(char result) {
     if (result == CONNECTX_PLAYER1) {
         printf("Player 1 wins!\n");
@@ -56,10 +54,7 @@ void connectx_display(const connectx_board_t board) {
 }
 
 void print_board(connectx_board_t board) {
-    (void)(system("stty cooked"));
-    printf("%s", CLEAR_SCREEN_ANSI);
     connectx_display(board);
-    (void)(system("stty raw"));
 }
 
 int move_player(connectx_board_t board, char player) {
